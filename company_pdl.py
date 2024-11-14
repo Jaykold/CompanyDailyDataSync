@@ -8,6 +8,7 @@ from aiohttp import ClientSession
 from peopledatalabs import PDLPY
 from tqdm import tqdm
 from company_lei import Lei
+from utils import save_to_csv
 
 class Pdl:
     def __init__(self):
@@ -131,10 +132,6 @@ class Pdl:
         df['company_size'] = [result['company_size'] for result in results]
 
         return df
-    
-    def save_to_csv(self, df, filename):
-        df.to_csv(filename, index=False)
-        print(f"Data saved to {filename}")
 
 if __name__=="__main__":
     # lei = Lei()
@@ -144,5 +141,4 @@ if __name__=="__main__":
     data = pd.DataFrame({'entity_name': ['Microsoft', 'Google', 'Tesla']})
     #df = pd.read_csv("result_df.csv")
     enriched_df = pdl.enrich_dataframe(data)
-    pdl.save_to_csv(data, pdl.filename)
-    
+    save_to_csv(data, pdl.filename)

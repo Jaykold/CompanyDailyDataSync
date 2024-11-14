@@ -7,6 +7,8 @@ import math
 from typing import List, Dict, Optional
 from tqdm import tqdm
 
+from utils import save_to_csv
+
 
 class Lei:
     def __init__(self):
@@ -100,3 +102,4 @@ if __name__ == "__main__":
     lei = Lei()
     df = lei.clean_data()
     result_df = lei.process_companies_in_batches(df)
+    save_to_csv(result_df, "result_df.csv")
