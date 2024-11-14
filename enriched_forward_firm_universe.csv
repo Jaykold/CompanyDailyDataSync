@@ -1,0 +1,4 @@
+entity_name,entity_type,industry_classification,company_size
+Microsoft,public,computer software,10001+
+Google,private,,10001+
+Tesla,public,automotive,10001+
