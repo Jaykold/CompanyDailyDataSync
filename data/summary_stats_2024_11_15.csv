@@ -1,5 +1,4 @@
 attribute,non-Missing Count,missing Count,completeness (%)
 lei,22,22554,0.1
-industry_classification,22565,11,99.95
-n_employees,22572,4,99.98
-entity_type,22576,0,100.0
+industry_classification,67,22509,0.3
+n_employees,74,22502,0.33
