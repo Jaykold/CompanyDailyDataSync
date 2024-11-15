@@ -1,18 +1,18 @@
-import requests
+import sys
 import pandas as pd
 import re
-from aiohttp import ClientSession
+from aiohttp import ClientSession, ClientError
 import asyncio
 import math
 from typing import List, Dict, Optional
 from tqdm import tqdm
 
-from utils import save_to_csv
+from utils import save_to_excel, logging
 
 
 class Lei:
     def __init__(self):
-        self.path = "forward_firm_universe.xlsx"
+        self.path = "data/forward_firm_universe.xlsx"
         self.api_url = 'https://api.gleif.org/api/v1/lei-records'
         self.batch_size = 60
         self.rate_limit_delay = 0.1
@@ -29,8 +29,7 @@ class Lei:
 
         df['cleaned_entity_name'] = df['entity_name'].apply(self.clean_company_name)
         df_duplicate = df.drop_duplicates(subset=['cleaned_entity_name'])
-        df_cleaned = df_duplicate.drop(columns=['lei'])
-        df_cleaned = df_cleaned[['cleaned_entity_name', 'entity_name']]
+        df_cleaned = df_duplicate[['cleaned_entity_name', 'entity_name', 'lei']]
         
         return df_cleaned
 
@@ -57,8 +56,10 @@ class Lei:
                     if results:
                         return results[0]['attributes']['lei']
                 return None
+        except ClientError as e:
+            logging.error(f"Error fetching LEI for {company_name}: {str(e)}")
         except Exception as e:
-            print(f"Error fetching LEI for {company_name}: {str(e)}")
+            logging.error(f"Unexpected error fetching LEI for {company_name}: {str(e)}")
             return None
         
     async def get_leis_batch(self, session: ClientSession, company_names: List[str]) -> Dict[str, Optional[str]]:
@@ -74,7 +75,17 @@ class Lei:
     async def process_companies_async(self, df: pd.DataFrame) -> pd.DataFrame:
         """Process all companies asynchronously."""
         df_copy = df.copy()
-        n_companies = len(df_copy)
+
+        if 'lei' in df_copy.columns:
+            companies_to_process = df_copy[df_copy['lei'].isnull()]
+        else:
+            logging.warning("'lei' column does not exist in the DataFrame")
+            companies_to_process = df_copy 
+
+        n_companies = len(companies_to_process)
+        if n_companies == 0:
+            return df_copy # no companies to process
+        
         n_batches = math.ceil(n_companies / self.batch_size)
 
         all_results = {}
@@ -84,13 +95,14 @@ class Lei:
                     start_idx = i * self.batch_size
                     end_idx = min((i + 1) * self.batch_size, n_companies)
 
-                    batch_companies = df_copy['entity_name'].iloc[start_idx:end_idx].tolist()
+                    batch_companies = companies_to_process['cleaned_entity_name'].iloc[start_idx:end_idx].tolist()
                     batch_results = await self.get_leis_batch(session, batch_companies)
                     all_results.update(batch_results)
 
                     pbar.update(1)
-
-        df_copy['lei'] = df_copy['cleaned_entity_name'].map(all_results)
+        
+        # Update the original DataFrame with the new LEIs
+        df_copy['lei'] = df_copy['cleaned_entity_name'].map(all_results).combine_first(df_copy['lei'])
         return df_copy
 
     def process_companies_in_batches(self, df: pd.DataFrame) -> pd.DataFrame:
@@ -102,4 +114,4 @@ if __name__ == "__main__":
     lei = Lei()
     df = lei.clean_data()
     result_df = lei.process_companies_in_batches(df)
-    save_to_csv(result_df, "result_df.csv")
+    save_to_excel(result_df, "result_df.csv")

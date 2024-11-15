@@ -3,7 +3,7 @@ import azure.functions as func
 
 app = func.FunctionApp()
 
-@app.timer_trigger(schedule="0 0 8 * * *", arg_name="myTimer", run_on_startup=False,
+@app.timer_trigger(schedule="0 0 4 * * *", arg_name="myTimer", run_on_startup=False,
               use_monitor=False) 
 def forward_analytics(myTimer: func.TimerRequest) -> None:
     if myTimer.past_due:

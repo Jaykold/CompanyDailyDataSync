@@ -1,22 +1,21 @@
 import os
-from pydoc import resolve
 from typing import Dict, List
 import math
 import asyncio
 import pandas as pd
-from aiohttp import ClientSession
+from aiohttp import ClientSession, ClientError
 from peopledatalabs import PDLPY
 from tqdm import tqdm
-from company_lei import Lei
-from utils import save_to_csv
+#from src import Lei
+from utils import save_to_excel, logging
 
 class Pdl:
     def __init__(self):
         self.pdl_url = "https://api.peopledatalabs.com/v5/company/enrich"
-        self.pdl_api_key = os.getenv("PDL_API_KEY")
-        self.batch_size = 60
-        self.rate_limit_delay = 0.1
-        self.filename = "enriched_forward_firm_universe.csv"
+        self.pdl_api_key = os.getenv("PDL_API_KEY2")
+        self.batch_size = 50
+        self.rate_limit_delay = 0.2
+        self.filename = "data/forward_firm_universe.xlsx"
         self.is_using_sql_query = False
 
     async def fetch_company_info(self, session:ClientSession, company_name: str)->Dict[str, str]:
@@ -35,66 +34,22 @@ class Pdl:
                         'n_employees': data.get('employee_count', 'N/A'),
                     }
                 elif response.status == 402:
-                    if not self.is_using_sql_query:
-                        self.is_using_sql_query = True
-                        print(f"Direct API call rate limit reached. Attempting SQL query...")
-                    return await self.fetch_using_sql_query(session, company_name)
-                else:
-                    print(f"Failed to retrieve data for {company_name} (HTTP {response.status})")
                     return {
                         'entity_type': 'N/A',
                         'industry_classification': 'N/A',
                         'n_employees': 'N/A'
                     }
-        except Exception as e:
-            print(f"Error fetching company info for {company_name}: {str(e)}")
+                else:
+                    logging.error(f"Failed to retrieve data for {company_name} (HTTP {response.status})")
+                    return {
+                        'entity_type': 'N/A',
+                        'industry_classification': 'N/A',
+                        'n_employees': 'N/A'
+                    }
+        except ClientError as e:
+            logging.error(f"Error fetching company info for {company_name}: {str(e)}")
             return {'entity_type': 'N/A', 'industry_classification': 'N/A', 'company_size': 'N/A'}
-
-    async def fetch_using_sql_query(self, session: ClientSession, company_name: str) -> Dict[str, str]:
-        client = PDLPY(
-            api_key = self.pdl_api_key
-        )
-        # Create a parameters JSON object for the SQL query
-        sql_params = {
-            'dataset': 'all',
-            'sql': f"SELECT * FROM company WHERE (name = '{company_name}')",
-            'size': 1,
-            'pretty': "True"
-            }
-        
-        sql_response = client.company.search(**sql_params).json()
-        if sql_response["status"] == 200:
-            sql_data = sql_response['data']
-
-            if sql_data:
-                company = sql_data[0]
-                return {
-                    'entity_type': company.get('type', 'N/A'),
-                    'industry_classification': company.get('industry', 'N/A'),
-                    'company_size': company.get('size', 'N/A'),
-                }
-            elif sql_response.status == 402:
-                print("SQL query rate limit reached.")
-                return {
-                    'entity_type': 'N/A',
-                    'industry_classification': 'N/A',
-                    'company_size': 'N/A'
-                }
-            else:
-                print(f"Failed to retrieve data for {company_name} (HTTP {sql_response.status})")
-                return {
-                    'entity_type': 'N/A',
-                    'industry_classification': 'N/A',
-                    'company_size': 'N/A'
-                }
-        else:
-            print(f"Failed to retrieve data for {company_name} (HTTP {sql_response.status})")
-            return {
-                'entity_type': 'N/A',
-                'industry_classification': 'N/A',
-                'company_size': 'N/A'
-            }
-        
+                
     # Function to process data in batches
     async def fetch_all_company_info(self, company_names: List[str]):
         results = []
@@ -129,7 +84,7 @@ class Pdl:
         # Create new columns in the DataFrame and populate with fetched data
         df['entity_type'] = [result['entity_type'] for result in results]
         df['industry_classification'] = [result['industry_classification'] for result in results]
-        df['company_size'] = [result['company_size'] for result in results]
+        df['n_employees'] = [result['n_employees'] for result in results]
 
         return df
 
@@ -141,4 +96,4 @@ if __name__=="__main__":
     data = pd.DataFrame({'entity_name': ['Microsoft', 'Google', 'Tesla']})
     #df = pd.read_csv("result_df.csv")
     enriched_df = pdl.enrich_dataframe(data)
-    save_to_csv(data, pdl.filename)
+    save_to_excel(data, pdl.filename)
