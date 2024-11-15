@@ -4,7 +4,7 @@ from utils import logging
 
 def save_to_excel(df: pd.DataFrame, filepath: str):
     '''Saves dataset to Excel file'''
-    df.to_csv(filepath, index=False)
+    df.to_excel(filepath, index=False)
 
 
 def save_to_csv(dataset:pd.DataFrame, directory="data", filename_prefix="summary_stats"):
@@ -19,17 +19,6 @@ def save_to_csv(dataset:pd.DataFrame, directory="data", filename_prefix="summary
     # Save the DataFrame to CSV
     dataset.to_csv(filename, index=False)
     logging.info(f"DataFrame saved to {filename}")
-
-import pandas as pd
-
-# Sample DataFrame with enriched columns
-enriched_df = pd.DataFrame({
-    "Company_Name": ["Company A", "Company B", "Company C", "Company D"],
-    "LEI": ["1234567890", None, "0987654321", None],
-    "Entity_Type": ["Public", "Private", None, "State-owned"],
-    "Industry_Classification": [None, "Manufacturing", "Tech", None],
-    "Company_Size": [1000, None, 200, None]
-})
 
 # Function to generate a completeness summary report
 def generate_completeness_report(df: pd.DataFrame):

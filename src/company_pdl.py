@@ -4,19 +4,17 @@ import math
 import asyncio
 import pandas as pd
 from aiohttp import ClientSession, ClientError
-from peopledatalabs import PDLPY
 from tqdm import tqdm
-#from src import Lei
-from utils import save_to_excel, logging
+
+from utils import logging
 
 class Pdl:
     def __init__(self):
         self.pdl_url = "https://api.peopledatalabs.com/v5/company/enrich"
         self.pdl_api_key = os.getenv("PDL_API_KEY2")
-        self.batch_size = 50
-        self.rate_limit_delay = 0.2
+        self.batch_size = 60
+        self.rate_limit_delay = 0.1
         self.filename = "data/forward_firm_universe.xlsx"
-        self.is_using_sql_query = False
 
     async def fetch_company_info(self, session:ClientSession, company_name: str)->Dict[str, str]:
         params = {
@@ -87,13 +85,3 @@ class Pdl:
         df['n_employees'] = [result['n_employees'] for result in results]
 
         return df
-
-if __name__=="__main__":
-    # lei = Lei()
-    # df = lei.clean_data()
-    # result_df = lei.process_companies_in_batches(df)
-    pdl = Pdl()
-    data = pd.DataFrame({'entity_name': ['Microsoft', 'Google', 'Tesla']})
-    #df = pd.read_csv("result_df.csv")
-    enriched_df = pdl.enrich_dataframe(data)
-    save_to_excel(data, pdl.filename)

@@ -1,6 +1,7 @@
 import pandas as pd
 from utils import save_to_excel, generate_completeness_report, logging
 from src import Lei, Pdl
+from utils.utils import save_to_csv
 
 def main():
     lei = Lei()
@@ -10,7 +11,8 @@ def main():
     enriched_df = pdl.enrich_dataframe(result_df)
     logging.info('Data enrichment completed!')
     df = generate_completeness_report(enriched_df)
-    save_to_excel(df, pdl.filename)
+    save_to_csv(df)
+    save_to_excel(enriched_df, pdl.filename)
     logging.info("Data saved to excel file")
 
 if __name__=="__main__":
