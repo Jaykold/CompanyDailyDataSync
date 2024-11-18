@@ -1,6 +1,20 @@
 **[Installation & Requirements](requirements.txt)**
 
 ## **Setting up**
+
+* Create a virtual environment
+
+```
+python -m venv myenv
+```
+
+* Activate virtual environment
+
+```
+source myenv/bin/activate
+```
+* Install the required packages
+
 ```
 pip install -r requirements.txt
 ```
