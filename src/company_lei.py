@@ -28,8 +28,10 @@ class Lei:
         df.columns = df.columns.str.lower()
 
         df['cleaned_entity_name'] = df['entity_name'].apply(self.clean_company_name)
-        df_duplicate = df.drop_duplicates(subset=['cleaned_entity_name'])
-        df_cleaned = df_duplicate[['cleaned_entity_name', 'entity_name', 'lei']]
+        df_cleaned = df.drop_duplicates(subset=['cleaned_entity_name'])
+
+        df_cleaned = df_cleaned.drop(columns=['isin'], errors='ignore')
+
         
         return df_cleaned
 
@@ -79,8 +81,8 @@ class Lei:
         if 'lei' in df_copy.columns:
             companies_to_process = df_copy[df_copy['lei'].isnull()]
         else:
-            logging.warning("'lei' column does not exist in the DataFrame")
-            companies_to_process = df_copy 
+            logging.warning("'lei' column does not exist in the DataFrame.")
+            companies_to_process = df_copy
 
         n_companies = len(companies_to_process)
         if n_companies == 0:

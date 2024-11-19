@@ -11,7 +11,7 @@ from utils import logging
 class Pdl:
     def __init__(self):
         self.pdl_url = "https://api.peopledatalabs.com/v5/company/enrich"
-        self.pdl_api_key = os.getenv("PDL_API_KEY2")
+        self.pdl_api_key = os.getenv("PDL_API_KEY")
         self.batch_size = 60
         self.rate_limit_delay = 0.1
         self.filename = "data/forward_firm_universe.xlsx"
@@ -31,7 +31,8 @@ class Pdl:
                         'industry_classification': data.get('industry', 'N/A'),
                         'n_employees': data.get('employee_count', 'N/A'),
                     }
-                elif response.status == 402:
+                elif response.status == 402: # Rate limit
+                    logging.warning(f"Rate limit reached while fetching data for {company_name}.")
                     return {
                         'entity_type': 'N/A',
                         'industry_classification': 'N/A',
@@ -46,7 +47,7 @@ class Pdl:
                     }
         except ClientError as e:
             logging.error(f"Error fetching company info for {company_name}: {str(e)}")
-            return {'entity_type': 'N/A', 'industry_classification': 'N/A', 'company_size': 'N/A'}
+            return {'entity_type': 'N/A', 'industry_classification': 'N/A', 'n_employees': 'N/A'}
                 
     # Function to process data in batches
     async def fetch_all_company_info(self, company_names: List[str]):
@@ -56,8 +57,10 @@ class Pdl:
 
         async with ClientSession() as session:
             with tqdm(total=n_batches, desc="Processing batches") as pbar:
-                for i in range(0, len(company_names), self.batch_size):
-                    batch = company_names[i:i+self.batch_size]
+                for i in range(n_batches):
+                    start = i * self.batch_size
+                    end = min(start + self.batch_size, n_companies)
+                    batch = company_names[start:end]
                     tasks = [self.fetch_company_info(session, company) for company in batch]
                     batch_results = await asyncio.gather(*tasks)
                     results.extend(batch_results)

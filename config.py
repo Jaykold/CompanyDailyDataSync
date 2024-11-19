@@ -53,28 +53,3 @@ class Config:
 if __name__ == "__main__":
     config = Config()
     print(config.get_gleif_data())
-
-    import pandas as pd
-
-# Define the chunk size (number of rows per chunk)
-chunk_size = 100000  # Adjust this based on your memory capacity
-
-# Initialize an empty list to collect the results
-chunks = []
-
-# Use the chunksize parameter to load the data in smaller chunks
-for chunk in pd.read_csv('path_to_your_file.csv', chunksize=chunk_size):
-    # Extract the relevant columns
-    relevant_chunk = chunk[['name', 'size', 'industry', 'locality']]
-    
-    # Append the result to the list of chunks
-    chunks.append(relevant_chunk)
-
-# Concatenate all the chunks into a single DataFrame
-final_data = pd.concat(chunks, axis=0)
-
-# Optionally, save the final output to a new CSV file
-final_data.to_csv('output_file.csv', index=False)
-
-# Check the first few rows of the final result
-print(final_data.head())
