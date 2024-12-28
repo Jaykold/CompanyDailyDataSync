@@ -73,18 +73,34 @@ class Pdl:
         if not isinstance(df, pd.DataFrame):
             raise ValueError("Input must be a pandas DataFrame")
         
+        for col in ['entity_type', 'industry_classification', 'n_employees']:
+            if col not in df.columns:
+                df[col] = 'N/A'
+
+        if 'entity_type' in df.columns:
+            companies_to_enrich = df[df['entity_type'].isnull()]
+            if companies_to_enrich.empty:
+                logging.info("All companies have been enriched.")
+                return df
+        else:
+            logging.warning("No 'entity_type' column found in the DataFrame. Enriching all companies.")
+            companies_to_enrich = df
+
         # Get unique company names and their index in the dataframe
-        company_names = df['entity_name'].tolist()
+        company_names = companies_to_enrich['entity_name'].tolist()
         
         # Fetch data concurrently
         results = asyncio.run(self.fetch_all_company_info(company_names))
 
         if len(results) != len(company_names):
-            raise ValueError("The number of results does not match the number of company names.")
+            raise ValueError("Results count does not match company names.")
         
-        # Create new columns in the DataFrame and populate with fetched data
-        df['entity_type'] = [result['entity_type'] for result in results]
-        df['industry_classification'] = [result['industry_classification'] for result in results]
-        df['n_employees'] = [result['n_employees'] for result in results]
+        # Update the DataFrame with the new data
+        companies_to_enrich.loc[:, 'entity_type'] = [result['entity_type'] for result in results]
+        companies_to_enrich.loc[:, 'industry_classification'] = [result['industry_classification'] for result in results]
+        companies_to_enrich.loc[:, 'n_employees'] = [result['n_employees'] for result in results]
+
+        # Update the original DataFrame
+        df.update(companies_to_enrich)
 
         return df
