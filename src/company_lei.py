@@ -12,7 +12,7 @@ from utils import save_to_excel, logging
 
 class Lei:
     def __init__(self):
-        self.path = "data/forward_firm_universe.xlsx"
+        self.path = "data/companies.xlsx"
         self.api_url = 'https://api.gleif.org/api/v1/lei-records'
         self.batch_size = 60
         self.rate_limit_delay = 0.1

@@ -14,7 +14,7 @@ from main import main
 
 app = func.FunctionApp()
 
-@app.timer_trigger(schedule="*/20 * * * * *", arg_name="myTimer", run_on_startup=False,
+@app.timer_trigger(schedule="0 0 * * *", arg_name="myTimer", run_on_startup=False,
               use_monitor=False) 
 def MyTimer(myTimer: func.TimerRequest) -> None:
     

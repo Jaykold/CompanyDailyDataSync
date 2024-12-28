@@ -10,8 +10,16 @@ python -m venv myenv
 
 * Activate virtual environment
 
+For Linux
+
 ```
 source myenv/bin/activate
+```
+
+For Windows
+
+```
+myenv\Scripts\activate
 ```
 * Install the required packages
 

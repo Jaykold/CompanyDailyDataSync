@@ -14,7 +14,7 @@ class Pdl:
         self.pdl_api_key = os.getenv("PDL_API_KEY")
         self.batch_size = 60
         self.rate_limit_delay = 0.1
-        self.filename = "data/forward_firm_universe.xlsx"
+        self.filename = "data/companies.xlsx"
 
     async def fetch_company_info(self, session:ClientSession, company_name: str)->Dict[str, str]:
         params = {
